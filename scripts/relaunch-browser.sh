@@ -12,6 +12,13 @@ if [[ -z "$LINE" ]]; then
   echo "no chromium line in ~/.config/labwc/autostart — skipping relaunch"
   exit 0
 fi
+# Don't open the page before the server answers: Chromium shows "This site
+# can't be reached" and never retries. Right after a (re)start of kiosk-ui,
+# or at boot, it can take a moment.
+for _ in $(seq 40); do
+  python3 -c 'import urllib.request as u; u.urlopen("http://localhost:8080/", timeout=1)' 2>/dev/null && break
+  sleep 0.25
+done
 pkill -x chromium || true
 for _ in $(seq 20); do pgrep -x chromium >/dev/null || break; sleep 0.25; done
 setsid bash -c "$LINE" >/dev/null 2>&1 < /dev/null &

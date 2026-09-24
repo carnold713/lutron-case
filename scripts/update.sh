@@ -18,15 +18,28 @@ main() {
   REPO="$(cd "$(dirname "$0")/.." && pwd)"
   KIOSK="$HOME/kiosk"
   [[ "${1:-}" == "--force" ]] && FORCE=1
+  # Set when we re-run ourselves after a pull brought a newer update.sh.
+  local PULLED_FROM="${UPDATE_SH_PULLED_FROM:-}"
 
   step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
   changed() { [[ $FORCE == 1 ]] || ! git diff --quiet "$BEFORE" "$AFTER" -- "$@"; }
 
   cd "$REPO"
-  step "pull from GitHub ($(git rev-parse --abbrev-ref HEAD))"
-  BEFORE="$(git rev-parse HEAD)"
-  git pull --ff-only
+  if [[ -n "$PULLED_FROM" ]]; then
+    BEFORE="$PULLED_FROM"
+  else
+    step "pull from GitHub ($(git rev-parse --abbrev-ref HEAD))"
+    BEFORE="$(git rev-parse HEAD)"
+    git pull --ff-only
+  fi
   AFTER="$(git rev-parse HEAD)"
+  # The copy of this script that is running is the one from BEFORE the pull.
+  # If the pull changed it, hand over to the new version so new install steps
+  # (new files, new services) actually run — the old copy doesn't know them.
+  if [[ -z "$PULLED_FROM" && "$BEFORE" != "$AFTER" ]] && ! git diff --quiet "$BEFORE" "$AFTER" -- scripts/update.sh; then
+    echo "update.sh itself changed — continuing with the new version"
+    UPDATE_SH_PULLED_FROM="$BEFORE" exec bash "$REPO/scripts/update.sh" "$@"
+  fi
   if [[ "$BEFORE" == "$AFTER" && $FORCE == 0 ]]; then
     echo "already up to date (use --force to reinstall anyway)"
   else
@@ -76,7 +89,7 @@ main() {
       sudo install -m 644 "hardware/systemd/$unit.service" /etc/systemd/system/
       sudo systemctl daemon-reload
       sudo systemctl restart "$unit"
-      if [[ $unit == kiosk-hw ]]; then HW_RESTART=0; else UI_RESTART=0; fi
+      if [[ $unit == kiosk-hw ]]; then HW_RESTART=0; else UI_RESTART=0; UI_BUILT=1; fi
     fi
   done
   if [[ $HW_RESTART == 1 ]]; then
@@ -86,6 +99,7 @@ main() {
   if [[ $UI_RESTART == 1 ]]; then
     step "kiosk_server.py changed → restart kiosk-ui"
     sudo systemctl restart kiosk-ui
+    UI_BUILT=1 # Chromium may have hit the server mid-restart; reload it
   fi
   # A service that is stopped (first install, or it was disabled) would leave
   # Chromium on "This site can't be reached". Make sure both are up.
