@@ -1,0 +1,16 @@
+[Unit]
+Description=Lutron case UI static server (~/kiosk/ui on :8080)
+After=network.target
+
+[Service]
+User=lutron
+Group=lutron
+WorkingDirectory=/home/lutron/kiosk/ui
+# Plain stdlib static server: no extra dependencies, and the built app plus
+# content/ are just files. Bound to localhost: only the kiosk browser needs it.
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1 --directory /home/lutron/kiosk/ui
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

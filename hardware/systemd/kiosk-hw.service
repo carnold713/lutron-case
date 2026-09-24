@@ -1,0 +1,25 @@
+[Unit]
+Description=Lutron case hardware service (NFC + light sensor -> WebSocket :8765)
+# Needs the labwc session up so wlr-randr has a compositor to talk to.
+After=graphical.target
+Wants=graphical.target
+
+[Service]
+User=lutron
+Group=lutron
+WorkingDirectory=/home/lutron/kiosk/hardware
+# QUIRK: hardware.py turns the screen on/off with wlr-randr, which talks to the
+# Wayland compositor. A systemd service does not inherit the desktop session's
+# environment, so without these two lines wlr-randr can't find the session and
+# screen control fails *silently* (no error, the panel just never sleeps/wakes).
+# uid 1000 = lutron.
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/lutron/kiosk/.venv/bin/python /home/lutron/kiosk/hardware/hardware.py
+# If the reader or I2C bus hiccups at boot, come back rather than stay dead.
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical.target
