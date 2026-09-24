@@ -55,9 +55,10 @@ case "${1:-apply}" in
     cat > "$UNIT" <<EOF
 [Unit]
 Description=Lutron case: full-range RGB on $OUTPUT (true OLED black)
-# Must run before the desktop takes the display (only the DRM master may set it).
+# Must run before the desktop takes the display (only the DRM master may set
+# it); the script asks the boot splash to let go of it first.
 Before=display-manager.service
-After=systemd-udevd.service
+After=systemd-udevd.service plymouth-start.service
 
 [Service]
 Type=oneshot
@@ -85,8 +86,21 @@ EOF
     for _ in $(seq 40); do [[ -n "$(probe)" ]] && break; sleep 0.25; done
     read -r cid pid full cur < <(probe) || { echo "no 'Broadcast RGB' property on $OUTPUT; nothing to do"; exit 0; }
     if [[ "$cur" == "$full" ]]; then echo "$OUTPUT already full range"; exit 0; fi
-    proptest -M "$DRIVER" "$cid" connector "$pid" "$full"
-    echo "$OUTPUT: Broadcast RGB set to Full"
+    # QUIRK: during boot the Plymouth splash screen holds the display (it is
+    # the DRM master), so the property write is refused with EACCES (proptest
+    # exits 243). Ask Plymouth to let go — keeping its last frame on screen so
+    # nothing flickers — then retry for a few seconds.
+    if command -v plymouth >/dev/null && plymouth --ping 2>/dev/null; then
+      plymouth quit --retain-splash || true
+    fi
+    for _ in $(seq 20); do
+      proptest -M "$DRIVER" "$cid" connector "$pid" "$full" >/dev/null 2>&1 || true
+      read -r _ _ _ cur < <(probe) || true
+      if [[ "$cur" == "$full" ]]; then echo "$OUTPUT: Broadcast RGB set to Full"; exit 0; fi
+      sleep 0.25
+    done
+    echo "$OUTPUT: could not set Broadcast RGB (display still held by another program?)" >&2
+    exit 1
     ;;
 
   *)
