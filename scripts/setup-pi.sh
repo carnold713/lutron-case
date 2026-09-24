@@ -82,5 +82,8 @@ else
   echo "$KIOSK_LINE" >> "$AUTOSTART"
 fi
 
+step "display → portrait"
+bash "$SRC/scripts/display-portrait.sh"
+
 step "done"
 echo "Now run $SRC/scripts/update.sh, then: sudo reboot"

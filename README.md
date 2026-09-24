@@ -14,7 +14,7 @@ See [BRIEF.md](BRIEF.md) for the full brief, hardware contract and constraints.
 | `hardware/mock.py` | Fake of the above for development without hardware. |
 | `ui/` | Vite + React app. Pure consumer of the WebSocket. |
 | `content/items.json` | Products, keyed by tag UID. Media in `content/media/`. |
-| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `deploy.sh` (Mac → Pi over SSH). |
+| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `display-portrait.sh` (rotate the panel, run by setup), `deploy.sh` (Mac → Pi over SSH). |
 
 ## Develop (on the Mac)
 
