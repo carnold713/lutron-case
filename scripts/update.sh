@@ -6,9 +6,9 @@
 #   ~/lutron-case/scripts/update.sh            pull + install what changed
 #   ~/lutron-case/scripts/update.sh --force    rebuild and reinstall everything
 #
-# Only rebuilds the UI when ui/ changed; a content-only change installs in
-# seconds and needs no browser relaunch (the UI re-reads items.json on every
-# tag read). Restarts kiosk-hw only when hardware.py or its unit changed.
+# Only rebuilds the UI when the installed build doesn't match ui/; a
+# content-only change installs in seconds and needs no browser relaunch (the
+# UI re-reads items.json on every tag read). Restarts kiosk-hw only when hardware.py or its unit changed.
 set -euo pipefail
 
 # Everything lives in main(): `git pull` may rewrite this very file, and bash
@@ -38,8 +38,12 @@ main() {
     || { echo "content/items.json is not valid JSON — not installing." >&2; exit 1; }
 
   mkdir -p "$KIOSK/ui/content" "$KIOSK/hardware"
-  local UI_BUILT=0
-  if changed ui || [[ ! -f "$KIOSK/ui/index.html" ]]; then
+  # Rebuild when the installed build doesn't match ui/ in this checkout. The
+  # stamp holds git's hash of the ui/ tree, so an older or foreign install
+  # (or a build that failed halfway) is always replaced.
+  local UI_BUILT=0 UI_TREE STAMP="$KIOSK/ui/.ui-tree"
+  UI_TREE="$(git rev-parse HEAD:ui)"
+  if [[ $FORCE == 1 || "$(cat "$STAMP" 2>/dev/null)" != "$UI_TREE" ]]; then
     step "build ui"
     cd "$REPO/ui"
     if changed package-lock.json || [[ ! -d node_modules ]]; then npm ci --no-audit --no-fund; fi
@@ -47,6 +51,7 @@ main() {
     cd "$REPO"
     # The app; content/ has its own sync below.
     rsync -a --delete --exclude 'content/' ui/dist/ "$KIOSK/ui/"
+    echo "$UI_TREE" > "$STAMP"
     UI_BUILT=1
   fi
 
