@@ -1,0 +1,38 @@
+{
+  "04a1b2c3d4e5f6": {
+    "title": "Caséta Smart Dimmer",
+    "subtitle": "PD-6WCL-WH",
+    "accent": "#F5B335",
+    "sections": [
+      { "type": "hero", "image": "media/caseta/hero.svg", "caption": "Placeholder copy — replace with real product content." },
+      { "type": "text", "heading": "Why it matters", "body": "A dimmer that replaces an ordinary switch and puts the lights on a schedule, a remote and your phone.\n\nNo rewiring, no hub in the wall: it installs in the same box as the switch it replaces." },
+      { "type": "specs", "rows": [["Load", "150W LED"], ["Neutral", "Not required"], ["Protocol", "Clear Connect RF"], ["Finish", "White"]] },
+      { "type": "gallery", "images": ["media/caseta/1.svg", "media/caseta/2.svg", "media/caseta/3.svg"] },
+      { "type": "quote", "body": "The first smart switch I didn't have to explain to anyone.", "attribution": "Placeholder testimonial" }
+    ]
+  },
+  "04c7d8e9f0a1b2": {
+    "title": "Pico Remote",
+    "subtitle": "PJ2-3BRL-WH",
+    "accent": "#6FB3E8",
+    "sections": [
+      { "type": "hero", "image": "media/pico/hero.svg", "caption": "Placeholder copy — replace with real product content." },
+      { "type": "text", "heading": "A switch you can put anywhere", "body": "Battery powered and wireless, so it goes on a wall, a table or a bedside without an electrician." },
+      { "type": "specs", "rows": [["Battery", "CR2032"], ["Buttons", "On, off, raise, lower, favourite"], ["Mounting", "Wall plate, pedestal or loose"]] },
+      { "type": "gallery", "images": ["media/pico/1.svg", "media/pico/2.svg"] }
+    ]
+  },
+  "04112233445566": {
+    "title": "Serena Smart Shade",
+    "subtitle": "Placeholder model",
+    "accent": "#7FBF8E",
+    "sections": [
+      { "type": "text", "heading": "Starts without a hero", "body": "This seed item exercises the edge cases: no hero section (the title leads on its own), a section type the UI doesn't know (skipped), and a gallery with one missing file (dropped)." },
+      { "type": "future-widget", "note": "unknown type — must be skipped silently" },
+      { "type": "specs", "rows": [["Power", "Battery wand"], ["Quiet", "Yes"], ["Bad row"]] },
+      { "type": "gallery", "heading": "Gallery", "images": ["media/serena/1.svg", "media/serena/2.svg", "media/serena/3.svg"] },
+      { "type": "video", "src": "media/serena/missing.mp4", "poster": "media/serena/hero.svg" },
+      { "type": "quote", "body": "Light, when you want it, how you want it.", "attribution": "Placeholder" }
+    ]
+  }
+}

@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""Fake hardware service for developing the UI without a Pi.
+
+Speaks the same WebSocket contract as hardware.py on ws://localhost:8765:
+plausible `light` readings every 250ms, plus tags you trigger by hand.
+
+    python3 hardware/mock.py              # interactive
+    python3 hardware/mock.py --auto 8     # cycle items, one every 8s
+    python3 hardware/mock.py --climate    # also emit SHT41-style readings
+
+Keys:  n next item   1-9 item N   u unknown tag   r remove tag
+       s sleep/wake  l list items q quit
+
+Needs: pip install websockets
+"""
+
+import argparse, asyncio, json, math, os, random, sys, threading, time
+from pathlib import Path
+
+try:
+    import websockets
+except ImportError:
+    sys.exit("mock.py needs websockets:  python3 -m pip install websockets")
+
+HOST, PORT = "localhost", 8765
+LIGHT_INTERVAL_S = 0.25
+CLIMATE_INTERVAL_S = 5.0
+UNKNOWN_UID = "04deadbeef0042"
+ITEMS_PATH = Path(__file__).resolve().parent.parent / "content" / "items.json"
+UI_DEV_URL = "http://localhost:5173"
+
+clients = set()
+state = {"tag": None, "awake": True, "index": -1}
+
+
+def load_items():
+    """Re-read every time so edits to items.json show up without a restart."""
+    try:
+        data = json.loads(ITEMS_PATH.read_text())
+        return [(uid, (v or {}).get("title", "?")) for uid, v in data.items()]
+    except Exception as e:  # malformed JSON is a thing the UI must survive too
+        print(f"  (couldn't read {ITEMS_PATH.name}: {e})")
+        return []
+
+
+async def send(msg):
+    raw = json.dumps(msg)
+    for ws in list(clients):
+        try:
+            await ws.send(raw)
+        except Exception:
+            clients.discard(ws)
+
+
+async def handler(ws):
+    clients.add(ws)
+    print(f"  ui connected ({len(clients)})")
+    # Same as hardware.py: tell a new client the current screen state.
+    await ws.send(json.dumps({"type": "wake" if state["awake"] else "sleep"}))
+    try:
+        async for raw in ws:
+            try:
+                msg = json.loads(raw)
+            except ValueError:
+                continue
+            if msg.get("type") == "shutdown":
+                print("  << shutdown requested (the real service would power off)")
+    finally:
+        clients.discard(ws)
+        print(f"  ui disconnected ({len(clients)})")
+
+
+async def light_loop():
+    """Slow drift around a warm-white room, with a little sensor jitter."""
+    t0 = time.time()
+    while True:
+        t = time.time() - t0
+        if state["awake"]:
+            kelvin = 4200 + 900 * math.sin(t / 40) + random.uniform(-25, 25)
+            lux = 220 + 60 * math.sin(t / 17) + random.uniform(-3, 3)
+            brightness = int(lux * 4)
+        else:  # lid closed
+            kelvin, lux, brightness = 0, 0.0, random.randint(0, 20)
+        await send({"type": "light", "kelvin": int(kelvin), "lux": round(lux, 1),
+                    "brightness": brightness})
+        await asyncio.sleep(LIGHT_INTERVAL_S)
+
+
+async def climate_loop():
+    # Reserved message for the SHT41 (I2C 0x44), not in hardware.py yet.
+    while True:
+        await send({"type": "climate", "celsius": round(22 + random.uniform(-0.3, 0.3), 1),
+                    "humidity": round(41 + random.uniform(-1, 1), 1)})
+        await asyncio.sleep(CLIMATE_INTERVAL_S)
+
+
+async def set_awake(on):
+    if on == state["awake"]:
+        return
+    state["awake"] = on
+    print(f"  -> {'wake' if on else 'sleep'}")
+    await send({"type": "wake" if on else "sleep"})
+
+
+async def place(uid, title=""):
+    # Like the real reader: a new tag replaces the old without a tag-gone.
+    if uid == state["tag"]:
+        return
+    state["tag"] = uid
+    await set_awake(True)
+    print(f"  -> tag {uid}  {title}")
+    await send({"type": "tag", "uid": uid, "at": time.strftime("%H:%M:%S")})
+
+
+async def remove():
+    if state["tag"] is None:
+        return
+    state["tag"] = None
+    print("  -> tag-gone")
+    await send({"type": "tag-gone"})
+
+
+def print_items(items):
+    if not items:
+        print("  no items in content/items.json")
+    for i, (uid, title) in enumerate(items, 1):
+        print(f"  {i}  {uid}  {title:<32} {UI_DEV_URL}/?tag={uid}")
+
+
+async def command(key):
+    items = load_items()
+    if key == "n" and items:
+        state["index"] = (state["index"] + 1) % len(items)
+        await place(*items[state["index"]])
+    elif key.isdigit() and 0 < int(key) <= len(items):
+        state["index"] = int(key) - 1
+        await place(*items[state["index"]])
+    elif key == "u":
+        await place(UNKNOWN_UID, "(not in items.json)")
+    elif key == "r":
+        await remove()
+    elif key == "s":
+        await set_awake(not state["awake"])
+    elif key == "l":
+        print_items(items)
+    elif key == "q":  # line mode; the keypress reader handles q itself
+        os._exit(0)
+
+
+def read_keys(loop):
+    """Single keypresses on a terminal; falls back to line input otherwise."""
+    def dispatch(ch):
+        asyncio.run_coroutine_threadsafe(command(ch.lower()), loop)
+
+    if sys.stdin.isatty():
+        try:
+            import atexit, termios, tty
+            fd = sys.stdin.fileno()
+            old = termios.tcgetattr(fd)
+            # Put the terminal back however we exit (q, Ctrl-C, crash).
+            atexit.register(termios.tcsetattr, fd, termios.TCSADRAIN, old)
+            tty.setcbreak(fd)
+            while True:
+                ch = sys.stdin.read(1)
+                if not ch or ch in "qQ":
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+                    os._exit(0)
+                dispatch(ch)
+        except ImportError:  # no termios (Windows): line mode below
+            pass
+    for line in sys.stdin:
+        for ch in line.strip():
+            dispatch(ch)
+
+
+async def auto_loop(every):
+    """Cycle through items: place, hold, lift, pause, next."""
+    while True:
+        await command("n")
+        await asyncio.sleep(every * 0.7)
+        await remove()
+        await asyncio.sleep(every * 0.3)
+
+
+async def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--auto", type=float, metavar="SECONDS", help="cycle through items on a timer")
+    ap.add_argument("--climate", action="store_true", help="emit reserved SHT41 climate messages")
+    args = ap.parse_args()
+
+    tasks = [light_loop()]
+    if args.climate:
+        tasks.append(climate_loop())
+    if args.auto:
+        tasks.append(auto_loop(args.auto))
+
+    async with websockets.serve(handler, HOST, PORT):
+        print(f"mock hardware on ws://{HOST}:{PORT}")
+        print("keys: n next · 1-9 item · u unknown · r remove · s sleep/wake · l list · q quit")
+        print_items(load_items())
+        threading.Thread(target=read_keys, args=(asyncio.get_running_loop(),), daemon=True).start()
+        await asyncio.gather(*tasks)
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
