@@ -2,10 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
+import { installDragScroll } from './dragScroll.js'
 import './styles.css'
 
 // Touch kiosk: a long press would otherwise open Chromium's context menu.
 window.addEventListener('contextmenu', (e) => e.preventDefault())
+// The Pi's touchscreen can arrive as a mouse; make drags scroll anyway.
+installDragScroll()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
