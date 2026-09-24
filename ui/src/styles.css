@@ -985,3 +985,12 @@ button {
   font-size: 13px;
   color: var(--fg-dim);
 }
+
+.prog-warn {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgb(201 138 58 / 0.12);
+  color: #e3b27a;
+  font-size: 15px;
+}

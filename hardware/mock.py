@@ -8,7 +8,8 @@ plausible `light` readings every 250ms, plus tags you trigger by hand.
     python3 hardware/mock.py --auto 8     # cycle items, one every 8s
     python3 hardware/mock.py --climate    # also emit SHT41-style readings
 
-Keys:  n next item   1-9 item N   u unknown tag   b blank new tag   r remove tag
+Keys:  n next item   1-9 item N   u unknown tag   b blank new tag   d two tags at once
+       r remove tag
        s sleep/wake  l list items q quit
 
 Needs: pip install websockets
@@ -139,6 +140,18 @@ async def remove():
     await send({"type": "tag-gone"})
 
 
+async def double_read(known, stray="64fa8b8e", flips=6):
+    """Replays what the PN532 does with two tags in its field (seen on the case:
+    an NTAG sticker plus a 4-byte card on the same product): it reports them
+    alternately, about once a second, and only sends tag-gone when both leave."""
+    print(f"  -> two tags in range: {known} and {stray}")
+    for i in range(flips):
+        uid = known if i % 2 == 0 else stray
+        state["tag"] = uid
+        await send({"type": "tag", "uid": uid, "at": time.strftime("%H:%M:%S")})
+        await asyncio.sleep(1.1)
+
+
 def print_items(items):
     if not items:
         print("  no items in content/items.json")
@@ -156,6 +169,9 @@ async def command(key):
         await place(*items[state["index"]])
     elif key == "u":
         await place(UNKNOWN_UID, "(unassigned)")
+    elif key == "d":  # two tags in range at once: the real reader alternates between them
+        if items:
+            asyncio.ensure_future(double_read(items[0][0]))
     elif key == "b":  # a brand-new sticker, for trying out tag programming
         await place("04" + os.urandom(6).hex(), "(blank tag)")
     elif key == "r":
@@ -217,7 +233,7 @@ async def main():
 
     async with websockets.serve(handler, HOST, PORT):
         print(f"mock hardware on ws://{HOST}:{PORT}")
-        print("keys: n next · 1-9 item · u unknown · b blank tag · r remove · s sleep/wake · l list · q quit")
+        print("keys: n next · 1-9 item · u unknown · b blank tag · d two tags · r remove · s sleep/wake · l list · q quit")
         print_items(load_items())
         threading.Thread(target=read_keys, args=(asyncio.get_running_loop(),), daemon=True).start()
         await asyncio.gather(*tasks)

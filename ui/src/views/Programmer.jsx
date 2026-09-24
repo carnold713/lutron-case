@@ -10,7 +10,7 @@ import { KIND_LABELS, normaliseItem } from '../content.js'
 // left in it at a demo.
 const PROGRAM_IDLE_TIMEOUT_MS = 180_000
 
-export default function Programmer({ uid, at, items, targetOf, assign, onDone }) {
+export default function Programmer({ uid, at, items, targetOf, assign, alsoInRange, onDone }) {
   const [saving, setSaving] = useState(null) // content id being saved
   const [message, setMessage] = useState(null) // { ok, text }
   const doneRef = useRef(onDone)
@@ -86,6 +86,14 @@ export default function Programmer({ uid, at, items, targetOf, assign, onDone })
               )}
             </div>
             {message && <div className={`prog-msg${message.ok ? '' : ' is-error'}`}>{message.text}</div>}
+            {alsoInRange && alsoInRange !== uid && (
+              // Two tags in the reader's field make it alternate between them;
+              // on a demo that flips the screen back and forth.
+              <div className="prog-warn">
+                Another tag is also in range ({groupHex(alsoInRange)}). Remove it if it isn’t meant to be there —
+                with two tags on the pad the reader switches between them.
+              </div>
+            )}
             {current && (
               <button className="btn btn-small btn-quiet" onClick={() => save(null)} disabled={saving !== null}>
                 Unassign

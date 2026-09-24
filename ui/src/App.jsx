@@ -11,6 +11,12 @@ import Programmer from './views/Programmer.jsx'
 // reading, then fall back to idle.
 export const HOLD_AFTER_REMOVAL_MS = 60_000
 
+// Two tags in range at once (seen on the case: a sticker plus a 4-byte card
+// on the same product). The PN532 reports them alternately, ~1s apart, as
+// separate "tag" messages. Keep what's showing, and only move to the newcomer
+// if the current tag stops being reported for this long.
+const STRAY_WINDOW_MS = 2500
+
 // ?tag=<uid> opens whatever that tag is assigned to, as if it were sitting on
 // the pad. ?tag=<content id> (e.g. ?tag=pico) opens a page directly.
 const URL_TAG = new URLSearchParams(window.location.search).get('tag')?.toLowerCase() || null
@@ -29,6 +35,15 @@ export default function App() {
   tagRef.current = tag
   const programmingRef = useRef(programming)
   programmingRef.current = programming
+  // A newcomer tag waiting to see if it's a stray (see STRAY_WINDOW_MS).
+  const pending = useRef(null)
+  // For the programmer: another tag was seen alongside the one being programmed.
+  const [alsoInRange, setAlsoInRange] = useState(null)
+
+  const cancelPending = () => {
+    clearTimeout(pending.current)
+    pending.current = null
+  }
 
   const clearHold = () => {
     clearTimeout(holdTimer.current)
@@ -44,22 +59,57 @@ export default function App() {
     }, HOLD_AFTER_REMOVAL_MS)
   }, [])
 
-  useEffect(() => clearHold, [])
+  useEffect(
+    () => () => {
+      clearHold()
+      cancelPending()
+    },
+    [],
+  )
+
+  // Act on a tag: open its page, or hand it to the programmer.
+  const applyTag = (uid, at) => {
+    if (programmingRef.current) {
+      reload()
+      setAlsoInRange(null)
+      setProgramming({ uid, at: at || null })
+      return
+    }
+    clearHold()
+    reload() // pick up content edits without a browser restart
+    // A different uid remounts the item view (keyed by uid), which resets scroll.
+    setTag({ uid, at: at || null, present: true })
+    setAdmin(false)
+  }
 
   const hw = useHardware({
     onTag(uid, at) {
-      if (programmingRef.current) {
-        reload()
-        setProgramming({ uid, at: at || null })
+      const prog = programmingRef.current
+      const cur = prog ? prog.uid : tagRef.current.present ? tagRef.current.uid : null
+      if (uid === cur) {
+        // The current tag is still there: whatever arrived in between was a stray.
+        cancelPending()
         return
       }
-      clearHold()
-      reload() // pick up content edits without a browser restart
-      // A different uid remounts the item view (keyed by uid), which resets scroll.
-      setTag({ uid, at: at || null, present: true })
-      setAdmin(false)
+      // Contested: something is already on the pad, and the newcomer shouldn't
+      // take over outright — in the programmer (never swap mid-programming),
+      // or when a known product is showing and the newcomer is unknown.
+      // A known newcomer replaces a known product at once (a product swap).
+      const contested = cur && (prog || (resolve(cur) && !resolve(uid)))
+      cancelPending()
+      if (contested) {
+        if (prog) setAlsoInRange(uid)
+        pending.current = setTimeout(() => {
+          pending.current = null
+          applyTag(uid, at)
+        }, STRAY_WINDOW_MS)
+        return
+      }
+      applyTag(uid, at)
     },
     onTagGone() {
+      cancelPending()
+      setAlsoInRange(null)
       if (!tagRef.current.uid) return
       setTag((t) => ({ ...t, present: false }))
       startHold()
@@ -107,7 +157,12 @@ export default function App() {
         items={items}
         targetOf={targetOf}
         assign={assign}
-        onDone={() => setProgramming(null)}
+        alsoInRange={alsoInRange}
+        onDone={() => {
+          cancelPending()
+          setAlsoInRange(null)
+          setProgramming(null)
+        }}
       />
     )
   } else if (admin) {
