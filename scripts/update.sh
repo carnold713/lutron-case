@@ -72,6 +72,16 @@ main() {
     step "hardware.py changed → restart kiosk-hw"
     sudo systemctl restart kiosk-hw
   fi
+  # A service that is stopped (first install, or it was disabled) would leave
+  # Chromium on "This site can't be reached". Make sure both are up.
+  for unit in kiosk-ui kiosk-hw; do
+    if ! systemctl is-active --quiet "$unit"; then
+      step "$unit not running → start"
+      sudo systemctl enable "$unit" 2>/dev/null || true
+      sudo systemctl restart "$unit"
+      UI_BUILT=1 # relaunch the browser so it retries the page
+    fi
+  done
 
   if [[ $UI_BUILT == 1 ]]; then
     step "relaunch kiosk browser"
