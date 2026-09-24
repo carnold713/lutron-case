@@ -565,3 +565,37 @@ button {
     transition: none;
   }
 }
+
+/* ---------- back button (item + unknown screens) ---------- */
+
+/* Floats top-left over the content, including the hero image, so it needs its
+   own dark backing. 52px: comfortably over the 44px touch minimum. */
+.back-btn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  /* No backdrop-filter: blurring on every scroll frame is real GPU work on the Pi. */
+  background: rgb(0 0 0 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  z-index: 10;
+  animation: view-in 450ms ease-out both;
+}
+
+.back-btn:active {
+  background: rgb(40 40 40 / 0.8);
+}
+
+.back-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

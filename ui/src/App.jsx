@@ -65,6 +65,14 @@ export default function App() {
     },
   })
 
+  // Back button: straight to idle. If the product is still on the pad it stays
+  // dismissed — the reader only reports a tag once per arrival, so lifting and
+  // setting it down again brings it back.
+  const goIdle = () => {
+    clearHold()
+    setTag({ uid: null, at: null, present: false })
+  }
+
   // While a lifted item is being held, touching the screen means someone is
   // still reading: restart the countdown rather than yank it away.
   const holding = !!tag.uid && !tag.present
@@ -96,6 +104,13 @@ export default function App() {
   return (
     <div className="app">
       {view}
+      {tag.uid && !admin && (
+        <button className="back-btn" onClick={goIdle} aria-label="Back">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+        </button>
+      )}
       <div className={`offline-dot${hw.online ? '' : ' is-offline'}`} aria-hidden="true" />
     </div>
   )
