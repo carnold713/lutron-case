@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 // its own so a curious visitor can't leave it up.
 const ADMIN_AUTO_CANCEL_MS = 15_000
 
-export default function Admin({ onCancel, onShutdown }) {
+export default function Admin({ onCancel, onProgram, onShutdown }) {
   const [stopping, setStopping] = useState(false)
   // The parent re-renders on every light reading; don't let that restart the timer.
   const cancelRef = useRef(onCancel)
@@ -27,6 +27,9 @@ export default function Admin({ onCancel, onShutdown }) {
   return (
     <main className="view admin">
       <h1 className="admin-title">Case controls</h1>
+      <button className="btn" onClick={onProgram}>
+        Program tags
+      </button>
       <button
         className="btn btn-danger"
         onClick={() => {

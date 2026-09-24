@@ -8,13 +8,13 @@ plausible `light` readings every 250ms, plus tags you trigger by hand.
     python3 hardware/mock.py --auto 8     # cycle items, one every 8s
     python3 hardware/mock.py --climate    # also emit SHT41-style readings
 
-Keys:  n next item   1-9 item N   u unknown tag   r remove tag
+Keys:  n next item   1-9 item N   u unknown tag   b blank new tag   r remove tag
        s sleep/wake  l list items q quit
 
 Needs: pip install websockets
 """
 
-import argparse, asyncio, json, math, os, random, sys, threading, time
+import argparse, asyncio, json, math, os, random, re, sys, threading, time
 from pathlib import Path
 
 try:
@@ -26,7 +26,11 @@ HOST, PORT = "localhost", 8765
 LIGHT_INTERVAL_S = 0.25
 CLIMATE_INTERVAL_S = 5.0
 UNKNOWN_UID = "04deadbeef0042"
-ITEMS_PATH = Path(__file__).resolve().parent.parent / "content" / "items.json"
+HEX_UID = re.compile(r"^[0-9a-f]{8,20}$")
+ROOT = Path(__file__).resolve().parent.parent
+ITEMS_PATH = ROOT / "content" / "items.json"
+TAGS_PATHS = [ROOT / "content" / "tags.json",      # tags that ship with the repo
+              ROOT / ".dev-data" / "tags.json"]    # tags programmed in the dev UI
 UI_DEV_URL = "http://localhost:5173"
 
 clients = set()
@@ -34,13 +38,28 @@ state = {"tag": None, "awake": True, "index": -1}
 
 
 def load_items():
-    """Re-read every time so edits to items.json show up without a restart."""
+    """Tag UIDs with the title they open, as (uid, title) pairs.
+
+    Re-read every time so edits (and tags programmed in the UI) show up
+    without a restart. Items keyed directly by a UID count as tags too.
+    """
     try:
-        data = json.loads(ITEMS_PATH.read_text())
-        return [(uid, (v or {}).get("title", "?")) for uid, v in data.items()]
+        items = json.loads(ITEMS_PATH.read_text())
     except Exception as e:  # malformed JSON is a thing the UI must survive too
         print(f"  (couldn't read {ITEMS_PATH.name}: {e})")
-        return []
+        items = {}
+    tags = {}
+    for path in TAGS_PATHS:
+        try:
+            tags.update(json.loads(path.read_text()))
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print(f"  (couldn't read {path}: {e})")
+    title = lambda cid: ((items.get(cid) or {}).get("title") or f"({cid} — not in items.json)") if cid else "(unassigned)"
+    pairs = [(uid, title(cid)) for uid, cid in tags.items()]
+    pairs += [(k, title(k)) for k in items if HEX_UID.match(k) and k not in tags]
+    return pairs
 
 
 async def send(msg):
@@ -136,7 +155,9 @@ async def command(key):
         state["index"] = int(key) - 1
         await place(*items[state["index"]])
     elif key == "u":
-        await place(UNKNOWN_UID, "(not in items.json)")
+        await place(UNKNOWN_UID, "(unassigned)")
+    elif key == "b":  # a brand-new sticker, for trying out tag programming
+        await place("04" + os.urandom(6).hex(), "(blank tag)")
     elif key == "r":
         await remove()
     elif key == "s":
@@ -196,7 +217,7 @@ async def main():
 
     async with websockets.serve(handler, HOST, PORT):
         print(f"mock hardware on ws://{HOST}:{PORT}")
-        print("keys: n next · 1-9 item · u unknown · r remove · s sleep/wake · l list · q quit")
+        print("keys: n next · 1-9 item · u unknown · b blank tag · r remove · s sleep/wake · l list · q quit")
         print_items(load_items())
         threading.Thread(target=read_keys, args=(asyncio.get_running_loop(),), daemon=True).start()
         await asyncio.gather(*tasks)
