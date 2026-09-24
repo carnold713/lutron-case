@@ -37,15 +37,21 @@ cd "$ROOT/ui"
 npm run build --silent
 
 step "sync → $PI:~/$REMOTE_DIR/"
-ssh_ "mkdir -p $REMOTE_DIR/ui/content $REMOTE_DIR/hardware"
+ssh_ "mkdir -p $REMOTE_DIR/ui/content $REMOTE_DIR/hardware $REMOTE_DIR/server $REMOTE_DIR/data"
 # The app; leave content/ alone here, it has its own sync below.
 rsync_ --delete --exclude 'content/' "$ROOT/ui/dist/" "$PI:$REMOTE_DIR/ui/"
 rsync_ --delete "$ROOT/content/" "$PI:$REMOTE_DIR/ui/content/"
 HW_CHANGED="$(rsync_ --out-format='%n' "$ROOT/hardware/hardware.py" "$PI:$REMOTE_DIR/hardware/")"
+SRV_CHANGED="$(rsync_ --out-format='%n' "$ROOT/server/kiosk_server.py" "$PI:$REMOTE_DIR/server/")"
 
 if [[ -n "$HW_CHANGED" ]]; then
   step "hardware.py changed → restart kiosk-hw"
   ssh_ "sudo systemctl restart kiosk-hw"
+fi
+
+if [[ -n "$SRV_CHANGED" ]]; then
+  step "kiosk_server.py changed → restart kiosk-ui"
+  ssh_ "sudo systemctl restart kiosk-ui"
 fi
 
 step "relaunch kiosk browser"

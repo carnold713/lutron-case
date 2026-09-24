@@ -49,9 +49,9 @@ mkdir -p "$KIOSK/ui/content" "$KIOSK/hardware"
 "$KIOSK/.venv/bin/pip" install -q \
   adafruit-blinka adafruit-circuitpython-tcs34725 adafruit-circuitpython-pn532 pyserial websockets
 
-if [[ -f "$SRC/hardware/hardware.py" ]]; then
-  cp "$SRC/hardware/hardware.py" "$KIOSK/hardware/hardware.py"
-fi
+mkdir -p "$KIOSK/server" "$KIOSK/data"
+cp "$SRC/hardware/hardware.py" "$KIOSK/hardware/hardware.py"
+cp "$SRC/server/kiosk_server.py" "$KIOSK/server/kiosk_server.py"
 
 step "systemd units"
 sudo install -m 644 "$SRC/hardware/systemd/kiosk-hw.service" /etc/systemd/system/

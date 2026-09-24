@@ -58,10 +58,16 @@ main() {
   step "content"
   rsync -a --delete --itemize-changes content/ "$KIOSK/ui/content/"
 
-  local HW_RESTART=0
+  local HW_RESTART=0 UI_RESTART=0
+  mkdir -p "$KIOSK/server" "$KIOSK/data"
   if ! cmp -s hardware/hardware.py "$KIOSK/hardware/hardware.py"; then
     cp hardware/hardware.py "$KIOSK/hardware/hardware.py"
     HW_RESTART=1
+  fi
+  # The web server (serves the UI, stores tag assignments in ~/kiosk/data).
+  if ! cmp -s server/kiosk_server.py "$KIOSK/server/kiosk_server.py"; then
+    cp server/kiosk_server.py "$KIOSK/server/kiosk_server.py"
+    UI_RESTART=1
   fi
   local unit
   for unit in kiosk-hw kiosk-ui; do
@@ -70,12 +76,16 @@ main() {
       sudo install -m 644 "hardware/systemd/$unit.service" /etc/systemd/system/
       sudo systemctl daemon-reload
       sudo systemctl restart "$unit"
-      [[ $unit == kiosk-hw ]] && HW_RESTART=0
+      if [[ $unit == kiosk-hw ]]; then HW_RESTART=0; else UI_RESTART=0; fi
     fi
   done
   if [[ $HW_RESTART == 1 ]]; then
     step "hardware.py changed → restart kiosk-hw"
     sudo systemctl restart kiosk-hw
+  fi
+  if [[ $UI_RESTART == 1 ]]; then
+    step "kiosk_server.py changed → restart kiosk-ui"
+    sudo systemctl restart kiosk-ui
   fi
   # A service that is stopped (first install, or it was disabled) would leave
   # Chromium on "This site can't be reached". Make sure both are up.

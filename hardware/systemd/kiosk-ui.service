@@ -1,14 +1,16 @@
 [Unit]
-Description=Lutron case UI static server (~/kiosk/ui on :8080)
+Description=Lutron case UI server (~/kiosk/ui + tag API on :8080)
 After=network.target
 
 [Service]
 User=lutron
 Group=lutron
 WorkingDirectory=/home/lutron/kiosk/ui
-# Plain stdlib static server: no extra dependencies, and the built app plus
-# content/ are just files. Bound to localhost: only the kiosk browser needs it.
-ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1 --directory /home/lutron/kiosk/ui
+# kiosk_server.py: stdlib-only static server for the built app, plus the small
+# /api/tags endpoint the tag-programming screen saves to. Tag assignments live
+# in ~/kiosk/data (not ~/kiosk/ui/content, which update.sh replaces from git).
+# Bound to localhost: only the kiosk browser needs it.
+ExecStart=/usr/bin/python3 /home/lutron/kiosk/server/kiosk_server.py --root /home/lutron/kiosk/ui --data /home/lutron/kiosk/data --port 8080
 Restart=always
 RestartSec=2
 
