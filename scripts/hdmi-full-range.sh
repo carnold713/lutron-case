@@ -26,7 +26,8 @@ BIN=/usr/local/sbin/kiosk-hdmi-full-range
 # Prints "<connector id> <property id> <value for Full> <current value>" for OUTPUT.
 probe() {
   modetest -M "$DRIVER" -c 2>/dev/null | awk -v out="$OUTPUT" '
-    /^[0-9]+\t/ { split($0, f, "\t"); inconn = (f[4] == out); if (inconn) cid = f[1]; want = 0; next }
+    # modetest pads the name column with spaces (printf %-15s): trim before comparing.
+    /^[0-9]+\t/ { split($0, f, "\t"); name = f[4]; gsub(/[ \t]+$/, "", name); inconn = (name == out); if (inconn) cid = f[1]; want = 0; next }
     inconn && /^[\t ]+[0-9]+ Broadcast RGB:/ { match($0, /[0-9]+/); pid = substr($0, RSTART, RLENGTH); want = 1; next }
     inconn && want && /enums:/ { if (match($0, /Full=[0-9]+/)) full = substr($0, RSTART + 5, RLENGTH - 5) }
     inconn && want && /value:/ { match($0, /-?[0-9]+/); cur = substr($0, RSTART, RLENGTH); want = 0 }
