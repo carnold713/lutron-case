@@ -20,9 +20,9 @@ export default memo(function Item({ raw, holding, holdEpoch, holdMs, onInteract 
     onInteract()
   }
 
-  // The first section gets the title if it's a hero; otherwise the title
-  // block leads the page on its own.
-  const leadsWithHero = item.sections[0]?.type === 'hero'
+  // A hero first section carries the title; a scrolly one is its own opening.
+  // Otherwise the title block leads the page on its own.
+  const leadsWithHero = ['hero', 'scrolly'].includes(item.sections[0]?.type)
 
   return (
     <main

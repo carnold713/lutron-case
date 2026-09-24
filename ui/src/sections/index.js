@@ -4,6 +4,7 @@ import Specs from './Specs.jsx'
 import Gallery from './Gallery.jsx'
 import Video from './Video.jsx'
 import Quote from './Quote.jsx'
+import Scrolly from './Scrolly.jsx'
 
 // Section type (the "type" field in items.json) -> component.
 // Each component receives { section, item, isFirst }.
@@ -16,4 +17,5 @@ export const SECTIONS = {
   gallery: Gallery,
   video: Video,
   quote: Quote,
+  scrolly: Scrolly,
 }

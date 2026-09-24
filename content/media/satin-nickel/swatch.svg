@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+<!-- Placeholder brushed-metal swatch. Replace with a photo of the real material. -->
+<defs>
+<linearGradient id="m" x1="0" y1="0" x2="1" y2="0.3">
+<stop offset="0" stop-color="#5E5E5B"/><stop offset="0.35" stop-color="#B9B8B3"/><stop offset="0.55" stop-color="#8E8D89"/><stop offset="0.8" stop-color="#C9C8C3"/><stop offset="1" stop-color="#6A6A67"/>
+</linearGradient>
+<pattern id="brush" width="800" height="4" patternUnits="userSpaceOnUse"><rect width="800" height="1" fill="#FFFFFF" fill-opacity="0.06"/><rect y="2" width="800" height="1" fill="#000000" fill-opacity="0.05"/></pattern>
+<radialGradient id="v" cx="50%" cy="45%" r="75%"><stop offset="0.5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.85"/></radialGradient>
+</defs>
+<rect width="800" height="1000" fill="url(#m)"/>
+<rect width="800" height="1000" fill="url(#brush)"/>
+<rect width="800" height="1000" fill="url(#v)"/>
+</svg>

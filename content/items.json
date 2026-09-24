@@ -1,38 +1,438 @@
 {
-  "04a1b2c3d4e5f6": {
+  "pico": {
+    "kind": "product",
+    "title": "Pico Remote",
+    "subtitle": "PJ2-3BRL-GWH-L01",
+    "accent": "#D8B46A",
+    "sections": [
+      {
+        "type": "scrolly",
+        "object": {
+          "src": "media/pico/pico.svg",
+          "width": 0.222,
+          "aspect": 0.5
+        },
+        "scenes": [
+          {
+            "kicker": "Lutron Pico",
+            "headline": "Control, in the\npalm of your hand.",
+            "align": "center",
+            "copyY": 0.115,
+            "object": {
+              "x": 0.5,
+              "y": 0.656,
+              "scale": 1.15,
+              "rotate": -8
+            },
+            "glow": {
+              "x": 0.5,
+              "y": 0.677,
+              "size": 0.833,
+              "color": "#FFB347",
+              "opacity": 0.32
+            },
+            "extras": [
+              {
+                "type": "hint",
+                "label": "Swipe up"
+              }
+            ]
+          },
+          {
+            "kicker": "Wireless",
+            "headline": "A light switch\nthat goes\nanywhere.",
+            "body": "No wires, no new wall box, no electrician. Put it on the wall, set it on a table, or carry it room to room.",
+            "object": {
+              "x": 0.713,
+              "y": 0.6875,
+              "scale": 0.95,
+              "rotate": 14
+            },
+            "glow": {
+              "x": 0.704,
+              "y": 0.6875,
+              "size": 0.741,
+              "color": "#FFB347",
+              "opacity": 0.28
+            }
+          },
+          {
+            "kicker": "Simple by design",
+            "headline": "Five buttons.\nNothing to learn.",
+            "object": {
+              "x": 0.676,
+              "y": 0.6146,
+              "scale": 1.7,
+              "rotate": 0
+            },
+            "glow": {
+              "x": 0.676,
+              "y": 0.6146,
+              "size": 0.926,
+              "color": "#FFD08A",
+              "opacity": 0.26
+            },
+            "extras": [
+              {
+                "type": "callouts",
+                "anchorX": 0.125,
+                "items": [
+                  {
+                    "label": "On",
+                    "y": 0.183
+                  },
+                  {
+                    "label": "Raise",
+                    "y": 0.3875
+                  },
+                  {
+                    "label": "Favorite",
+                    "y": 0.5
+                  },
+                  {
+                    "label": "Lower",
+                    "y": 0.6125
+                  },
+                  {
+                    "label": "Off",
+                    "y": 0.8167
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kicker": "Raise · Lower",
+            "headline": "Dimming,\nby touch.",
+            "body": "Press and hold to raise or lower the lights. Let go when the room feels right.",
+            "object": {
+              "x": 0.639,
+              "y": 0.625,
+              "scale": 1.5,
+              "rotate": 0
+            },
+            "glow": {
+              "x": 0.574,
+              "y": 0.599,
+              "size": 1.019,
+              "color": "#FFD9A0",
+              "opacity": 0.45
+            },
+            "extras": [
+              {
+                "type": "meter",
+                "value": 0.72,
+                "label": "Light level",
+                "x": 0.139,
+                "top": 0.4375,
+                "height": 0.344
+              },
+              {
+                "type": "highlight",
+                "x": 0.5,
+                "y": 0.3875,
+                "w": 0.883,
+                "h": 0.1417
+              }
+            ]
+          },
+          {
+            "kicker": "The round button",
+            "headline": "Your favorite,\none press away.",
+            "body": "The center button recalls a preset level — the light you like, every time.",
+            "object": {
+              "x": 0.5,
+              "y": 0.755,
+              "scale": 3.2,
+              "rotate": 0
+            },
+            "glow": {
+              "x": 0.5,
+              "y": 0.755,
+              "size": 0.704,
+              "color": "#FFC46B",
+              "opacity": 0.6
+            },
+            "extras": [
+              {
+                "type": "rings",
+                "x": 0.5,
+                "y": 0.5,
+                "radii": [
+                  0.117,
+                  0.176,
+                  0.241
+                ]
+              }
+            ]
+          },
+          {
+            "kicker": "Battery powered",
+            "headline": "Years between\nbatteries.",
+            "body": "Runs on a single coin cell. No charging, no cables, no wiring.",
+            "object": {
+              "x": 0.296,
+              "y": 0.651,
+              "scale": 1.0,
+              "rotate": -10
+            },
+            "glow": {
+              "x": 0.574,
+              "y": 0.651,
+              "size": 0.833,
+              "color": "#A8C0FF",
+              "opacity": 0.22
+            },
+            "extras": [
+              {
+                "type": "badge",
+                "x": 0.704,
+                "y": 0.651,
+                "size": 0.296,
+                "title": "CR2032",
+                "subtitle": "3V"
+              }
+            ]
+          },
+          {
+            "kicker": "Mount it, or don’t",
+            "headline": "On the wall.\nOr not.",
+            "body": "Snap it into a wall plate, stand it on a pedestal, or keep it in your hand.",
+            "object": {
+              "x": 0.185,
+              "y": 0.651,
+              "scale": 0.55,
+              "rotate": 0
+            },
+            "glow": {
+              "x": 0.5,
+              "y": 0.651,
+              "size": 1.111,
+              "color": "#FFD9A0",
+              "opacity": 0.2
+            },
+            "extras": [
+              {
+                "type": "mounts",
+                "labelY": 0.771,
+                "items": [
+                  {
+                    "x": 0.185,
+                    "label": "Wall plate",
+                    "sub": "Looks like a switch",
+                    "base": "plate"
+                  },
+                  {
+                    "x": 0.5,
+                    "label": "Pedestal",
+                    "sub": "Sits on a table",
+                    "base": "pedestal",
+                    "clone": true
+                  },
+                  {
+                    "x": 0.815,
+                    "label": "In hand",
+                    "sub": "Goes where you go",
+                    "clone": true,
+                    "rotate": 18
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kicker": "Lutron Pico",
+            "headline": "Set it down.\nPick it up.\nTake control.",
+            "align": "center",
+            "copyY": 0.729,
+            "object": {
+              "x": 0.5,
+              "y": 0.51,
+              "scale": 1.0,
+              "rotate": 0
+            },
+            "glow": {
+              "x": 0.5,
+              "y": 0.51,
+              "size": 1.019,
+              "color": "#FFE2B0",
+              "opacity": 0.5
+            }
+          }
+        ]
+      },
+      {
+        "type": "specs",
+        "rows": [
+          [
+            "Buttons",
+            "On · Raise · Favorite · Lower · Off"
+          ],
+          [
+            "Finish",
+            "Gloss white"
+          ],
+          [
+            "Power",
+            "CR2032 coin cell"
+          ],
+          [
+            "Wireless",
+            "Clear Connect RF"
+          ],
+          [
+            "Range",
+            "Up to 30 ft (9 m)"
+          ],
+          [
+            "Mounting",
+            "Wall plate · Pedestal · Loose"
+          ],
+          [
+            "Works with",
+            "Caséta and RadioRA systems"
+          ]
+        ]
+      },
+      {
+        "type": "text",
+        "body": "Specifications to be confirmed against lutron.com before public use."
+      }
+    ]
+  },
+  "caseta-dimmer": {
+    "kind": "product",
     "title": "Caséta Smart Dimmer",
     "subtitle": "PD-6WCL-WH",
     "accent": "#F5B335",
     "sections": [
-      { "type": "hero", "image": "media/caseta/hero.svg", "caption": "Placeholder copy — replace with real product content." },
-      { "type": "text", "heading": "Why it matters", "body": "A dimmer that replaces an ordinary switch and puts the lights on a schedule, a remote and your phone.\n\nNo rewiring, no hub in the wall: it installs in the same box as the switch it replaces." },
-      { "type": "specs", "rows": [["Load", "150W LED"], ["Neutral", "Not required"], ["Protocol", "Clear Connect RF"], ["Finish", "White"]] },
-      { "type": "gallery", "images": ["media/caseta/1.svg", "media/caseta/2.svg", "media/caseta/3.svg"] },
-      { "type": "quote", "body": "The first smart switch I didn't have to explain to anyone.", "attribution": "Placeholder testimonial" }
+      {
+        "type": "hero",
+        "image": "media/caseta/hero.svg",
+        "caption": "Placeholder copy — replace with real product content."
+      },
+      {
+        "type": "text",
+        "heading": "Why it matters",
+        "body": "A dimmer that replaces an ordinary switch and puts the lights on a schedule, a remote and your phone.\n\nNo rewiring, no hub in the wall: it installs in the same box as the switch it replaces."
+      },
+      {
+        "type": "specs",
+        "rows": [
+          [
+            "Load",
+            "150W LED"
+          ],
+          [
+            "Neutral",
+            "Not required"
+          ],
+          [
+            "Protocol",
+            "Clear Connect RF"
+          ],
+          [
+            "Finish",
+            "White"
+          ]
+        ]
+      },
+      {
+        "type": "gallery",
+        "images": [
+          "media/caseta/1.svg",
+          "media/caseta/2.svg",
+          "media/caseta/3.svg"
+        ]
+      },
+      {
+        "type": "quote",
+        "body": "The first smart switch I didn't have to explain to anyone.",
+        "attribution": "Placeholder testimonial"
+      }
     ]
   },
-  "04c7d8e9f0a1b2": {
-    "title": "Pico Remote",
-    "subtitle": "PJ2-3BRL-WH",
-    "accent": "#6FB3E8",
-    "sections": [
-      { "type": "hero", "image": "media/pico/hero.svg", "caption": "Placeholder copy — replace with real product content." },
-      { "type": "text", "heading": "A switch you can put anywhere", "body": "Battery powered and wireless, so it goes on a wall, a table or a bedside without an electrician." },
-      { "type": "specs", "rows": [["Battery", "CR2032"], ["Buttons", "On, off, raise, lower, favourite"], ["Mounting", "Wall plate, pedestal or loose"]] },
-      { "type": "gallery", "images": ["media/pico/1.svg", "media/pico/2.svg"] }
-    ]
-  },
-  "04112233445566": {
+  "serena-shade": {
+    "kind": "product",
     "title": "Serena Smart Shade",
     "subtitle": "Placeholder model",
     "accent": "#7FBF8E",
     "sections": [
-      { "type": "text", "heading": "Starts without a hero", "body": "This seed item exercises the edge cases: no hero section (the title leads on its own), a section type the UI doesn't know (skipped), and a gallery with one missing file (dropped)." },
-      { "type": "future-widget", "note": "unknown type — must be skipped silently" },
-      { "type": "specs", "rows": [["Power", "Battery wand"], ["Quiet", "Yes"], ["Bad row"]] },
-      { "type": "gallery", "heading": "Gallery", "images": ["media/serena/1.svg", "media/serena/2.svg", "media/serena/3.svg"] },
-      { "type": "video", "src": "media/serena/missing.mp4", "poster": "media/serena/hero.svg" },
-      { "type": "quote", "body": "Light, when you want it, how you want it.", "attribution": "Placeholder" }
+      {
+        "type": "text",
+        "heading": "Starts without a hero",
+        "body": "This seed item exercises the edge cases: no hero section (the title leads on its own), a section type the UI doesn't know (skipped), and a gallery with one missing file (dropped)."
+      },
+      {
+        "type": "future-widget",
+        "note": "unknown type — must be skipped silently"
+      },
+      {
+        "type": "specs",
+        "rows": [
+          [
+            "Power",
+            "Battery wand"
+          ],
+          [
+            "Quiet",
+            "Yes"
+          ],
+          [
+            "Bad row"
+          ]
+        ]
+      },
+      {
+        "type": "gallery",
+        "heading": "Gallery",
+        "images": [
+          "media/serena/1.svg",
+          "media/serena/2.svg",
+          "media/serena/3.svg"
+        ]
+      },
+      {
+        "type": "video",
+        "src": "media/serena/missing.mp4",
+        "poster": "media/serena/hero.svg"
+      },
+      {
+        "type": "quote",
+        "body": "Light, when you want it, how you want it.",
+        "attribution": "Placeholder"
+      }
+    ]
+  },
+  "satin-nickel": {
+    "kind": "material",
+    "title": "Satin Nickel",
+    "subtitle": "Metal finish",
+    "accent": "#B9B8B3",
+    "sections": [
+      {
+        "type": "hero",
+        "image": "media/satin-nickel/swatch.svg",
+        "caption": "Placeholder material page — replace with real finish content and a photo of the sample."
+      },
+      {
+        "type": "text",
+        "heading": "The finish",
+        "body": "A brushed metal finish with a soft, low-sheen grain.\n\nThis is an example of a material page: the same sections as a product, with kind set to \"material\" so it's grouped under Materials when programming tags."
+      },
+      {
+        "type": "specs",
+        "rows": [
+          [
+            "Type",
+            "Metal finish"
+          ],
+          [
+            "Sheen",
+            "Satin"
+          ]
+        ]
+      }
     ]
   }
 }

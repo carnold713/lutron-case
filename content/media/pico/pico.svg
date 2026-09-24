@@ -1,0 +1,16 @@
+<svg width="240" height="480" viewBox="0 0 240 480" xmlns="http://www.w3.org/2000/svg">
+<!-- Pico 3-button raise/lower (PJ2-3BRL), gloss white. Drawn to match the Figma
+     component "Pico · Remote (PJ2-3BRL)". Buttons: On, Raise, Favorite, Lower, Off. -->
+<defs>
+<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FCFBF8"/><stop offset="1" stop-color="#D5D1C8"/></linearGradient>
+<linearGradient id="k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAE7E0"/></linearGradient>
+</defs>
+<rect width="240" height="480" rx="46" fill="url(#b)"/>
+<rect x="22" y="26" width="196" height="124" rx="30" fill="url(#k)" stroke="#CFCAC0" stroke-width="1.5"/>
+<rect x="22" y="160" width="196" height="52" rx="22" fill="url(#k)" stroke="#CFCAC0" stroke-width="1.5"/>
+<circle cx="120" cy="240" r="22" fill="url(#k)" stroke="#CFCAC0" stroke-width="1.5"/>
+<rect x="22" y="268" width="196" height="52" rx="22" fill="url(#k)" stroke="#CFCAC0" stroke-width="1.5"/>
+<rect x="22" y="330" width="196" height="124" rx="30" fill="url(#k)" stroke="#CFCAC0" stroke-width="1.5"/>
+<path d="M106 192 L120 181 L134 192" fill="none" stroke="#A29D93" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M106 288 L120 299 L134 288" fill="none" stroke="#A29D93" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
