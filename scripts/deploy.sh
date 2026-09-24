@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the UI on this machine and push it to the case.
+# Alternative to scripts/update.sh: build on the Mac and push over SSH,
+# without going through GitHub. Useful for quick uncommitted experiments.
 #
 #   scripts/deploy.sh            build + sync everything + relaunch the kiosk browser
 #   scripts/deploy.sh content    sync content/ only (no build, no relaunch — the
@@ -48,19 +49,6 @@ if [[ -n "$HW_CHANGED" ]]; then
 fi
 
 step "relaunch kiosk browser"
-# The static server serves new files immediately; Chromium just needs to
-# reload. Relaunch it with the exact line from labwc's autostart so the flags
-# live in one place. Kiosk mode has no reload key, hence kill + relaunch.
-ssh_ 'bash -s' <<'REMOTE'
-set -e
-# QUIRK: over SSH there is no desktop session env. Chromium (like wlr-randr in
-# kiosk-hw.service) needs these to find the labwc Wayland session.
-export WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000
-LINE="$(grep -m1 '^chromium' ~/.config/labwc/autostart | sed 's/[[:space:]]*&[[:space:]]*$//' || true)"
-if [[ -z "$LINE" ]]; then echo "no chromium line in ~/.config/labwc/autostart — skipping relaunch"; exit 0; fi
-pkill -x chromium || true
-for _ in $(seq 20); do pgrep -x chromium >/dev/null || break; sleep 0.25; done
-setsid bash -c "$LINE" >/dev/null 2>&1 < /dev/null &
-REMOTE
+ssh_ 'bash -s' < "$ROOT/scripts/relaunch-browser.sh"
 
 echo "done."

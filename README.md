@@ -14,7 +14,7 @@ See [BRIEF.md](BRIEF.md) for the full brief, hardware contract and constraints.
 | `hardware/mock.py` | Fake of the above for development without hardware. |
 | `ui/` | Vite + React app. Pure consumer of the WebSocket. |
 | `content/items.json` | Products, keyed by tag UID. Media in `content/media/`. |
-| `scripts/` | `deploy.sh` (Mac → Pi), `setup-pi.sh` (one-time Pi install). |
+| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `deploy.sh` (Mac → Pi over SSH). |
 
 ## Develop (on the Mac)
 
@@ -44,26 +44,37 @@ types are skipped. A new type is one file in `ui/src/sections/` plus a line in
 are refused (the case is offline). Encode video as H.264 MP4 with
 `-movflags +faststart` — the static server doesn't do range requests.
 
-## Deploy
+## Deploy (GitHub → Pi)
+
+GitHub is the source of truth. Edit on the Mac, `git push`, then in a
+terminal on the Pi:
 
 ```sh
-scripts/deploy.sh                          # build, rsync, relaunch the kiosk browser
-scripts/deploy.sh content                  # content/ only: no build, no relaunch
-PI=lutron@192.168.1.50 scripts/deploy.sh   # different host
+~/lutron-case/scripts/update.sh            # pull, build, install, relaunch
+~/lutron-case/scripts/update.sh --force    # rebuild and reinstall everything
 ```
 
-Syncs `ui/dist/` → `~/kiosk/ui/`, `content/` → `~/kiosk/ui/content/`, and
-`hardware.py` → `~/kiosk/hardware/` (restarting `kiosk-hw` only if it changed),
-then relaunches Chromium using the line in `~/.config/labwc/autostart`. The UI
-re-reads `items.json` on every tag read, so content-only deploys need no reload.
+It rebuilds the UI only when `ui/` changed and relaunches Chromium only then.
+Content-only changes install in seconds with no relaunch, because the UI
+re-reads `items.json` on every tag read. It restarts `kiosk-hw` only when
+`hardware.py` or a unit file changed, and refuses to install an invalid
+`items.json`.
+
+`scripts/deploy.sh` is the alternative for untested experiments: it builds on
+the Mac and rsyncs straight to the Pi over SSH, skipping GitHub.
 
 ## First-time Pi setup
 
-With the Pi already running Raspberry Pi OS (Trixie, labwc) as user `lutron`:
+On the Pi, as `lutron`, with Raspberry Pi OS (Trixie, labwc):
 
 ```sh
-rsync -a scripts hardware lutron@displaycase.local:/tmp/lutron-case/
-ssh lutron@displaycase.local 'bash /tmp/lutron-case/scripts/setup-pi.sh'
+git clone https://github.com/carnold713/lutron-case.git ~/lutron-case
+bash ~/lutron-case/scripts/setup-pi.sh
+~/lutron-case/scripts/update.sh
+sudo reboot
 ```
 
-Then `scripts/deploy.sh` from the Mac and reboot. It is safe to re-run.
+If the repo is private, the Pi needs read access: a GitHub deploy key or a
+personal access token. `setup-pi.sh` is safe to re-run. If something else
+already starts `hardware.py`, disable it first: two copies fight over the NFC
+reader and port 8765.

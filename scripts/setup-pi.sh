@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # One-time (and safe to re-run) install on the case's Pi. Run ON the Pi, as
-# user lutron, from a copy of this repo's scripts/ and hardware/ directories:
+# user lutron, from a clone of the repo:
 #
-#   rsync -a scripts hardware lutron@displaycase.local:/tmp/lutron-case/
-#   ssh lutron@displaycase.local 'bash /tmp/lutron-case/scripts/setup-pi.sh'
+#   git clone https://github.com/carnold713/lutron-case.git ~/lutron-case
+#   bash ~/lutron-case/scripts/setup-pi.sh
 #
-# Then run scripts/deploy.sh from the dev machine and reboot.
+# Then ~/lutron-case/scripts/update.sh to build and install, and reboot.
 set -euo pipefail
 
 KIOSK="$HOME/kiosk"
@@ -24,8 +24,9 @@ step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
 }
 
 step "packages"
+# nodejs/npm: update.sh builds the UI on the Pi from what's on GitHub.
 sudo apt-get update -qq
-sudo apt-get install -y -qq python3-venv python3-dev python3-lgpio rsync wlr-randr i2c-tools
+sudo apt-get install -y -qq python3-venv python3-dev python3-lgpio rsync wlr-randr i2c-tools git nodejs npm
 
 step "interfaces: I2C on, UART on, serial console off"
 # The TCS34725 (0x29) and the future SHT41 (0x44) are on I2C.
@@ -82,5 +83,4 @@ else
 fi
 
 step "done"
-echo "Now run scripts/deploy.sh from the dev machine, then: sudo reboot"
-[[ -f "$KIOSK/ui/index.html" ]] && sudo systemctl restart kiosk-ui kiosk-hw || true
+echo "Now run $SRC/scripts/update.sh, then: sudo reboot"
