@@ -16,7 +16,7 @@ See [BRIEF.md](BRIEF.md) for the full brief, hardware contract and constraints.
 | `ui/` | Vite + React app. Pure consumer of the WebSocket. |
 | `content/items.json` | Pages (products, materials…), keyed by id. Media in `content/media/`. |
 | `content/tags.json` | Tag UID → page id, as shipped in git. |
-| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `display-portrait.sh` (rotate the panel, run by setup), `deploy.sh` (Mac → Pi over SSH). |
+| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `display-portrait.sh` (rotate the panel) and `hdmi-full-range.sh` (true black on the OLED), both run by setup, `deploy.sh` (Mac → Pi over SSH). |
 
 ## Develop (on the Mac)
 

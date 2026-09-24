@@ -26,7 +26,7 @@ step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
 step "packages"
 # nodejs/npm: update.sh builds the UI on the Pi from what's on GitHub.
 sudo apt-get update -qq
-sudo apt-get install -y -qq python3-venv python3-dev python3-lgpio rsync wlr-randr i2c-tools git nodejs npm
+sudo apt-get install -y -qq python3-venv python3-dev python3-lgpio rsync wlr-randr i2c-tools git nodejs npm libdrm-tests
 
 step "interfaces: I2C on, UART on, serial console off"
 # The TCS34725 (0x29) and the future SHT41 (0x44) are on I2C.
@@ -84,6 +84,9 @@ fi
 
 step "display → portrait"
 bash "$SRC/scripts/display-portrait.sh"
+
+step "display → full-range RGB (true OLED black)"
+sudo bash "$SRC/scripts/hdmi-full-range.sh" --install
 
 step "done"
 echo "Now run $SRC/scripts/update.sh, then: sudo reboot"
