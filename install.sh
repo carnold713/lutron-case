@@ -172,16 +172,29 @@ step "Forcing full-range RGB for true AMOLED black"
 # and black shows as dark grey. This sets the connector's "Broadcast RGB"
 # property to Full (1) at boot. It must run before the desktop starts:
 # once labwc owns the display, the property can't be changed from outside.
-sudo tee /usr/local/bin/full-rgb.sh >/dev/null <<EOF
+sudo tee /usr/local/bin/full-rgb.sh >/dev/null <<'EOF'
 #!/bin/sh
-OUT=$SCREEN_OUTPUT
-for i in \$(seq 1 20); do
-  ID=\$(modetest -M vc4 -c 2>/dev/null | awk -v o="\$OUT" '\$4==o {print \$1; exit}')
-  [ -n "\$ID" ] && break
-  sleep 0.5
+# Force full-range RGB (0-255) on the AMOLED so black is 0, not 16.
+# Only the process in control of the display (DRM master) may change it,
+# and during boot that's the splash screen (plymouth). So: close the
+# splash, then retry until the setting sticks.
+OUT=__SCREEN_OUTPUT__
+command -v plymouth >/dev/null && plymouth quit --retain-splash 2>/dev/null
+for _ in $(seq 1 40); do
+  ID=$(modetest -M vc4 -c 2>/dev/null | awk -v o="$OUT" '$4==o {print $1; exit}')
+  if [ -n "$ID" ]; then
+    RESULT=$(modetest -M vc4 -w "$ID:Broadcast RGB:1" 2>&1)
+    if ! echo "$RESULT" | grep -q "failed"; then
+      echo "full-range RGB set on $OUT (connector $ID)"
+      exit 0
+    fi
+  fi
+  sleep 0.25
 done
-[ -n "\$ID" ] && modetest -M vc4 -w "\$ID:Broadcast RGB:1"
+echo "could not set full-range RGB on $OUT: ${RESULT:-connector not found}" >&2
+exit 1
 EOF
+sudo sed -i "s/__SCREEN_OUTPUT__/$SCREEN_OUTPUT/" /usr/local/bin/full-rgb.sh
 sudo chmod +x /usr/local/bin/full-rgb.sh
 
 sudo tee /etc/systemd/system/full-rgb.service >/dev/null <<'EOF'
