@@ -129,17 +129,33 @@ if [ -n "$UI_BUILD" ]; then
 fi
 if [ -d "$REPO_DIR/content" ]; then
   mkdir -p "$KIOSK_DIR/ui/content"
-  rsync -a "$REPO_DIR/content/" "$KIOSK_DIR/ui/content/"
+  # tags.json holds tag assignments made on the device itself, so never
+  # overwrite it on re-runs; only seed it from the repo if it's missing.
+  rsync -a --exclude tags.json "$REPO_DIR/content/" "$KIOSK_DIR/ui/content/"
+  if [ -f "$REPO_DIR/content/tags.json" ] && [ ! -f "$KIOSK_DIR/ui/content/tags.json" ]; then
+    cp "$REPO_DIR/content/tags.json" "$KIOSK_DIR/ui/content/tags.json"
+  fi
+fi
+
+# The repo's kiosk server serves the UI *and* handles saves from the
+# "Program tags" screen (POST /api/tags). A plain static server can't save.
+if [ -f "$REPO_DIR/server/kiosk_server.py" ]; then
+  rsync -a --delete "$REPO_DIR/server/" "$KIOSK_DIR/server/"
+  UI_EXEC="$KIOSK_DIR/.venv/bin/python $KIOSK_DIR/server/kiosk_server.py --root $KIOSK_DIR/ui --port $UI_PORT"
+else
+  warn "No server/kiosk_server.py in the repo — using a static server (tag saving won't work)."
+  UI_EXEC="/usr/bin/python3 -m http.server $UI_PORT --bind 127.0.0.1 -d $KIOSK_DIR/ui"
 fi
 
 sudo tee /etc/systemd/system/kiosk-ui.service >/dev/null <<EOF
 [Unit]
-Description=Lutron case UI server
+Description=Lutron case UI + kiosk server
 After=network.target
 
 [Service]
 User=$USER_NAME
-ExecStart=/usr/bin/python3 -m http.server $UI_PORT --bind 127.0.0.1 -d $KIOSK_DIR/ui
+WorkingDirectory=$KIOSK_DIR
+ExecStart=$UI_EXEC
 Restart=always
 
 [Install]
@@ -148,6 +164,7 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable kiosk-hw kiosk-ui
+sudo systemctl restart kiosk-ui
 
 # ---------------------------------------------------------------------------
 step "Forcing full-range RGB for true AMOLED black"
@@ -228,6 +245,7 @@ sensors running. Useful checks over SSH:
 
   systemctl status kiosk-hw kiosk-ui
   journalctl -u kiosk-hw -f          # live hardware log
+  journalctl -u kiosk-ui -n 20       # should show "kiosk server on http://..."
   i2cdetect -y 1                     # light sensor should show at 29
   ls -l /dev/ttyAMA0                 # NFC serial port should exist
   modetest -M vc4 -c | grep -A2 "Broadcast RGB"   # want value: 1 (Full)
