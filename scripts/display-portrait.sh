@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Rotate the case display to portrait, now and at every boot. Run ON the Pi as
-# lutron (setup-pi.sh calls it; safe to re-run):
+# lutron (setup-pi.sh and every update.sh run call it; safe to re-run):
 #
 #   ~/lutron-case/scripts/display-portrait.sh
 #
 # The panel is a 1920x1080 landscape panel mounted on its side; transform 90
-# was confirmed right side up on the case.
+# was confirmed right side up on the case. While the case runs, hardware.py
+# keeps it there: it wakes the screen with the rotation and puts it back if
+# anything else resets it. Change TRANSFORM here and in hardware.py together.
 set -euo pipefail
 
 OUTPUT="HDMI-A-2"
@@ -18,8 +20,11 @@ ROTATE_LINE="wlr-randr --output $OUTPUT --transform $TRANSFORM"
 # needs these to reach the labwc Wayland session (same as kiosk-hw.service).
 export WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000
 
-echo "rotate now: $ROTATE_LINE"
-$ROTATE_LINE || echo "  (couldn't reach the desktop session — will apply at next boot)"
+if $ROTATE_LINE; then
+  echo "display: $OUTPUT rotated to $TRANSFORM (portrait)"
+else
+  echo "display: couldn't rotate it now (above); portrait from the next boot"
+fi
 
 # Pi OS restores display settings from kanshi at login; if its config says
 # otherwise it would undo the rotation, so set the transform there too.
@@ -43,5 +48,4 @@ if [[ -s "$AUTOSTART" ]]; then
 else
   echo "$ROTATE_LINE" > "$AUTOSTART"   # sed can't insert into an empty file
 fi
-echo "autostart:"
-sed 's/^/  /' "$AUTOSTART"
+echo "display: rotation set at login ($AUTOSTART)"

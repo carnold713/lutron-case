@@ -9,6 +9,7 @@
 # Only rebuilds the UI when the installed build doesn't match ui/; a
 # content-only change installs in seconds and needs no browser relaunch (the
 # UI re-reads items.json on every tag read). Restarts kiosk-hw only when hardware.py or its unit changed.
+# Every run also re-applies the screen setup: portrait, touch only, no pointer.
 set -euo pipefail
 
 # Everything lives in main(): `git pull` may rewrite this very file, and bash
@@ -111,6 +112,12 @@ main() {
       UI_BUILT=1 # relaunch the browser so it retries the page
     fi
   done
+
+  # The screen setup lives in the repo too, so whatever happened on the Pi,
+  # an update puts it back. A failure here must not stop the install.
+  step "screen: portrait, touch only"
+  bash "$REPO/scripts/display-portrait.sh" || echo "display-portrait.sh failed; carrying on"
+  bash "$REPO/scripts/touch-only.sh" || echo "touch-only.sh failed; carrying on"
 
   if [[ $UI_BUILT == 1 ]]; then
     step "relaunch kiosk browser"

@@ -85,6 +85,9 @@ fi
 step "display → portrait"
 bash "$SRC/scripts/display-portrait.sh"
 
+step "touch → real touch, no pointer"
+bash "$SRC/scripts/touch-only.sh"
+
 step "display → full-range RGB (true OLED black)"
 sudo bash "$SRC/scripts/hdmi-full-range.sh" --install
 

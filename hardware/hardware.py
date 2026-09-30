@@ -1,4 +1,4 @@
-import asyncio, json, subprocess, time, serial
+import asyncio, json, re, subprocess, time, serial
 import board, adafruit_tcs34725, websockets
 from adafruit_pn532.uart import PN532_UART
 
@@ -7,6 +7,8 @@ light.integration_time = 100
 light.gain = 16
 BRIGHT_ON, DARK_OFF, DARK_SECONDS = 300, 40, 5
 OUTPUT = "HDMI-A-2"
+TRANSFORM = "90"  # portrait; the panel is mounted on its side. Same as scripts/display-portrait.sh
+ROTATION_CHECK_SECONDS = 10
 
 def open_nfc(port="/dev/ttyAMA0"):
     # the PN532 emits a wake-up preamble that trips the library's parser
@@ -18,7 +20,20 @@ def open_nfc(port="/dev/ttyAMA0"):
 
 nfc = open_nfc()
 nfc.SAM_configuration()
-clients, screen_on = set(), None
+clients, screen_on, scale = set(), None, None
+
+def output_state():
+    # OUTPUT's {"enabled", "transform", "scale"} as wlr-randr reports them, or None
+    try:
+        out = subprocess.run(["wlr-randr"], capture_output=True, text=True, timeout=5).stdout
+    except Exception:
+        return None
+    head = re.search(rf"^{re.escape(OUTPUT)} .*?(?=^\S|\Z)", out, re.M | re.S)
+    if not head: return None
+    def field(name):
+        m = re.search(rf"^\s+{name}: (\S+)", head.group(0), re.M)
+        return m and m.group(1)
+    return {"enabled": field("Enabled") == "yes", "transform": field("Transform"), "scale": field("Scale")}
 
 async def send(msg):
     for ws in list(clients):
@@ -35,12 +50,33 @@ async def handler(ws):
     finally:
         clients.discard(ws)
 
+# QUIRK: while an output is off the compositor doesn't report its rotation or
+# scale, so a bare `wlr-randr --on` brings it back landscape at scale 1 and the
+# whole kiosk turns sideways after every sleep. Wake it with the rotation, and
+# with the scale it had before it slept.
 async def set_screen(on):
-    global screen_on
+    global screen_on, scale
     if on == screen_on: return
     screen_on = on
-    subprocess.run(["wlr-randr", "--output", OUTPUT, "--on" if on else "--off"])
+    if on:
+        args = ["--on", "--transform", TRANSFORM] + (["--scale", scale] if scale else [])
+    else:
+        state = output_state()
+        if state and state["enabled"]: scale = state["scale"]
+        args = ["--off"]
+    subprocess.run(["wlr-randr", "--output", OUTPUT, *args])
     await send({"type": "wake" if on else "sleep"})
+
+async def rotation_loop():
+    # Anything else that applies display settings (kanshi at login, the Screen
+    # Configuration tool, a replugged cable) can undo the rotation; put it back.
+    while True:
+        await asyncio.sleep(ROTATION_CHECK_SECONDS)
+        if not screen_on: continue
+        state = await asyncio.to_thread(output_state)
+        if state and state["enabled"] and state["transform"] != TRANSFORM:
+            print(f"{OUTPUT} was at transform {state['transform']}; rotating back to {TRANSFORM}")
+            subprocess.run(["wlr-randr", "--output", OUTPUT, "--transform", TRANSFORM])
 
 async def light_loop():
     dark_since = None
@@ -72,7 +108,7 @@ async def tag_loop():
 async def main():
     await set_screen(True)
     async with websockets.serve(handler, "localhost", 8765):
-        print("hardware service running")
-        await asyncio.gather(light_loop(), tag_loop())
+        print(f"hardware service running; {OUTPUT}: {output_state()}")
+        await asyncio.gather(light_loop(), tag_loop(), rotation_loop())
 
 asyncio.run(main())

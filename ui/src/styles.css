@@ -161,6 +161,9 @@ button {
   margin-top: 96px;
   padding: 12px 20px;
   min-height: var(--touch);
+  /* The 3 s admin hold: with real touch, a finger drifting a few px would
+     start a pan and cancel the pointer. Nothing here scrolls anyway. */
+  touch-action: none;
 }
 
 .reading-value {

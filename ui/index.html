@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="color-scheme" content="dark" />
     <title>Lutron Case</title>
-    <!-- Paint black before the bundle loads so boot never flashes white on the OLED. -->
-    <style>html, body { background: #000; }</style>
+    <!-- Paint black and hide the pointer before the bundle loads, so boot never
+         flashes white on the OLED or shows an arrow. -->
+    <style>html, body { background: #000; cursor: none; }</style>
   </head>
   <body>
     <div id="root"></div>

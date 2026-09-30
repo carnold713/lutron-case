@@ -16,7 +16,7 @@ See [BRIEF.md](BRIEF.md) for the full brief, hardware contract and constraints.
 | `ui/` | Vite + React app. Pure consumer of the WebSocket. |
 | `content/items.json` | Pages (products, materials…), keyed by id. Media in `content/media/`. |
 | `content/tags.json` | Tag UID → page id, as shipped in git. |
-| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `display-portrait.sh` (rotate the panel) and `hdmi-full-range.sh` (true black on the OLED), both run by setup, `deploy.sh` (Mac → Pi over SSH). |
+| `scripts/` | `update.sh` (on the Pi: GitHub → case), `setup-pi.sh` (one-time Pi install), `display-portrait.sh` (rotate the panel) and `touch-only.sh` (real touch, no pointer), both re-applied by every update, `hdmi-full-range.sh` (true black on the OLED, run by setup), `deploy.sh` (Mac → Pi over SSH). |
 
 ## Develop (on the Mac)
 
@@ -101,6 +101,42 @@ re-reads `items.json` on every tag read. It restarts `kiosk-hw` only when
 
 `scripts/deploy.sh` is the alternative for untested experiments: it builds on
 the Mac and rsyncs straight to the Pi over SSH, skipping GitHub.
+
+## Screen: portrait, touch only
+
+The Pi's screen setup lives in the repo, and every `update.sh` run re-applies
+it, so a push and an update always put it back:
+
+- **Portrait.** `display-portrait.sh` rotates `HDMI-A-2` (transform 90) now
+  and at login. `hardware.py` wakes the screen with the rotation (a bare
+  `wlr-randr --on` after a sleep brings it back landscape) and turns it back
+  within 10 s if anything else rotates it.
+- **Touch only.** `touch-only.sh` has labwc deliver the touchscreen as real
+  touch, not an emulated mouse, and installs an invisible cursor so no pointer
+  is ever drawn. Touch changes apply at once; the invisible cursor from the
+  next reboot. For maintenance with a real mouse: `touch-only.sh --undo`, then
+  reboot.
+
+## Wi-Fi
+
+The case needs no network to run a demo. Only `update.sh` (GitHub) and SSH
+from the Mac need one, and for SSH the Mac must be on the same network. The
+Pi remembers every network it has joined and connects to whichever one is in
+range, so add networks ahead of time. Over SSH, while it's on a network it
+knows:
+
+```sh
+# save a network (it doesn't have to be in range; this doesn't switch to it)
+sudo nmcli connection add type wifi con-name "Studio" ifname wlan0 \
+  ssid "Studio" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "the-password"
+nmcli connection show                     # what it knows
+```
+
+Save your phone's hotspot this way once. Then, anywhere, you can turn the
+hotspot on, join it from the Mac too, and `ssh lutron@displaycase.local`; add
+the local Wi-Fi from there if you want. If the Pi knows no network nearby, a
+network cable straight from the Mac to the Pi usually gets you
+`ssh lutron@displaycase.local` without a router.
 
 ## First-time Pi setup
 

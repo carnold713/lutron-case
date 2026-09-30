@@ -5,6 +5,8 @@
 // browsers don't scroll on mouse drags — so the page looks frozen. The case
 // has no real mouse, so we treat any non-touch drag as a scroll, with a little
 // momentum. Genuine touch input (pointerType "touch") is left to the browser.
+// scripts/touch-only.sh turns labwc's emulation off; this stays as the
+// fallback for a panel that reports itself as a mouse.
 //
 // Installed once from main.jsx; works for every scroll container (the item
 // page, the tag list, gallery strips) by finding the nearest one that can
