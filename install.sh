@@ -37,7 +37,8 @@ step "Installing system packages"
 sudo apt-get update
 sudo apt-get install -y \
   git python3-venv python3-pip python3-dev i2c-tools \
-  wlr-randr nodejs npm rsync
+  wlr-randr nodejs npm rsync libdrm-tests \
+  python3-lgpio swig liblgpio-dev
 # Chromium ships preinstalled on desktop images; install it if missing.
 if ! command -v chromium >/dev/null && ! command -v chromium-browser >/dev/null; then
   sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
@@ -73,7 +74,10 @@ step "Setting up the hardware service"
 mkdir -p "$KIOSK_DIR"
 rsync -a --delete "$REPO_DIR/hardware/" "$KIOSK_DIR/hardware/"
 
-python3 -m venv "$KIOSK_DIR/.venv"
+# --system-site-packages lets the venv use Raspberry Pi OS's prebuilt lgpio
+# (the Pi 5 GPIO backend Blinka needs) instead of compiling it from source.
+# --clear rebuilds the venv so re-runs pick up this setting too.
+python3 -m venv --clear --system-site-packages "$KIOSK_DIR/.venv"
 "$KIOSK_DIR/.venv/bin/pip" install --upgrade pip
 if [ -f "$REPO_DIR/hardware/requirements.txt" ]; then
   "$KIOSK_DIR/.venv/bin/pip" install -r "$REPO_DIR/hardware/requirements.txt"
@@ -146,6 +150,39 @@ sudo systemctl daemon-reload
 sudo systemctl enable kiosk-hw kiosk-ui
 
 # ---------------------------------------------------------------------------
+step "Forcing full-range RGB for true AMOLED black"
+# 1920x1080 is a CEA/TV mode, so the Pi defaults to limited range (16-235)
+# and black shows as dark grey. This sets the connector's "Broadcast RGB"
+# property to Full (1) at boot. It must run before the desktop starts:
+# once labwc owns the display, the property can't be changed from outside.
+sudo tee /usr/local/bin/full-rgb.sh >/dev/null <<EOF
+#!/bin/sh
+OUT=$SCREEN_OUTPUT
+for i in \$(seq 1 20); do
+  ID=\$(modetest -M vc4 -c 2>/dev/null | awk -v o="\$OUT" '\$4==o {print \$1; exit}')
+  [ -n "\$ID" ] && break
+  sleep 0.5
+done
+[ -n "\$ID" ] && modetest -M vc4 -w "\$ID:Broadcast RGB:1"
+EOF
+sudo chmod +x /usr/local/bin/full-rgb.sh
+
+sudo tee /etc/systemd/system/full-rgb.service >/dev/null <<'EOF'
+[Unit]
+Description=Force full-range HDMI RGB
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/full-rgb.sh
+
+[Install]
+WantedBy=graphical.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable full-rgb
+
+# ---------------------------------------------------------------------------
 step "Configuring portrait kiosk mode"
 LABWC_DIR="$HOME/.config/labwc"
 AUTOSTART="$LABWC_DIR/autostart"
@@ -193,6 +230,7 @@ sensors running. Useful checks over SSH:
   journalctl -u kiosk-hw -f          # live hardware log
   i2cdetect -y 1                     # light sensor should show at 29
   ls -l /dev/ttyAMA0                 # NFC serial port should exist
+  modetest -M vc4 -c | grep -A2 "Broadcast RGB"   # want value: 1 (Full)
   pkill chromium                     # get back to the desktop
 
 If the screen is upside down, set ROTATION="270" at the top of this
